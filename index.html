@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Para Mi Kath / Mi Negrita - Flores Amarillas & Tu Diario 🌻💜</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js para audio ambiental -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@400;600;700&family=Nunito:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sunYellow: {
+                            100: '#FFFBEB',
+                            200: '#FEF08A',
+                            300: '#FDE047',
+                            400: '#FACC15',
+                            500: '#EAB308',
+                            600: '#CA8A04',
+                        },
+                        purpleNight: {
+                            100: '#F3E8FF',
+                            200: '#E9D5FF',
+                            300: '#D8B4FE',
+                            400: '#C084FC',
+                            500: '#A855F7',
+                            600: '#9333EA',
+                            700: '#7E22CE',
+                            800: '#5B21B6',
+                            900: '#3B0764',
+                        },
+                        cozyDark: {
+                            900: '#150721',
+                            800: '#290c42',
+                        }
+                    },
+                    fontFamily: {
+                        handwriting: ['Caveat', 'cursive'],
+                        title: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2.5s ease-in-out infinite alternate',
+                        'sway-sunflower': 'swaySunflower 3.5s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(250, 204, 21, 0.3)' },
+                            '100%': { boxShadow: '0 0 45px rgba(168, 85, 247, 0.8), 0 0 75px rgba(250, 204, 21, 0.6)' },
+                        },
+                        swaySunflower: {
+                            '0%': { transform: 'rotate(-3deg)' },
+                            '100%': { transform: 'rotate(3deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #150721 0%, #290c42 40%, #1e0933 75%, #0f0418 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(216, 180, 254, 0.35);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card-light {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(250, 204, 21, 0.6);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        #petalsCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .fluid-title {
+            font-size: clamp(2rem, 4vw + 1rem, 3.8rem);
+            line-height: 1.15;
+        }
+
+        .sunflower-bouquet-wrapper {
+            width: min(85vw, 320px);
+            height: min(85vw, 320px);
+        }
+
+        @media (min-width: 640px) {
+            .sunflower-bouquet-wrapper {
+                width: 360px;
+                height: 360px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(192, 132, 252, 0.6);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col justify-between items-center selection:bg-purpleNight-400 selection:text-white pb-10">
+
+    <canvas id="petalsCanvas"></canvas>
+
+    <!-- HEADER RESPONSIVO -->
+    <header class="fixed top-3 left-0 right-0 z-50 px-4 max-w-4xl mx-auto flex items-center justify-between pointer-events-none">
+        <button id="nicknameToggle" class="pointer-events-auto glass-card text-purpleNight-200 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-white/15 transition-all duration-300 border border-purpleNight-400/50 shadow-xl active:scale-95">
+            <span class="text-white/80 hidden sm:inline">Para:</span>
+            <span id="currentNicknameBadge" class="bg-gradient-to-r from-sunYellow-400 via-purpleNight-400 to-purpleNight-600 text-cozyDark-900 px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-extrabold shadow-sm">Kath</span>
+            <i class="fas fa-repeat text-purpleNight-300 text-xs"></i>
+        </button>
+
+        <button id="musicToggle" class="pointer-events-auto glass-card text-purpleNight-200 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-white/15 transition-all duration-300 border border-purpleNight-400/50 shadow-xl active:scale-95">
+            <i id="musicIcon" class="fas fa-music text-sunYellow-400"></i>
+            <span id="musicStatusText" class="text-xs sm:text-sm font-semibold">Caja de Música 💜</span>
+        </button>
+    </header>
+
+    <main class="relative z-10 w-full max-w-3xl mx-auto px-4 pt-16 sm:pt-20 flex flex-col items-center justify-center">
+
+        <!-- HERO / WELCOME SECTION -->
+        <section id="welcomeSection" class="w-full flex flex-col items-center text-center transition-all duration-700 ease-out">
+            
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full glass-card text-purpleNight-200 text-xs sm:text-sm font-extrabold mb-4 sm:mb-5 border border-purpleNight-400/50 shadow-lg">
+                <span class="text-base sm:text-lg">🌻</span>
+                <span>21 de Septiembre • Día de las Flores Amarillas</span>
+                <span class="text-white/30 hidden sm:inline">•</span>
+                <span class="hidden sm:inline">De tu primo hermano 🇻🇪🇧🇷</span>
+            </div>
+
+            <!-- TÍTULO PRINCIPAL CORREGIDO CON FLORES Y CORAZÓN AMARILLO SHINING -->
+            <h1 class="font-title fluid-title font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sunYellow-200 via-purpleNight-300 to-purpleNight-200 mb-3 sm:mb-4 drop-shadow-md px-2">
+                Para <span class="nicknameText">Kath</span>, la alegría de las Flores Amarillas <span class="inline-block text-sunYellow-300 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]">🌻💛</span>
+            </h1>
+
+            <p class="font-body text-sm sm:text-lg md:text-xl text-purpleNight-100/95 max-w-xl font-light leading-relaxed mb-5 sm:mb-6 px-3">
+                Hoy todo el mundo regala flores amarillas, pero yo quise darte un ramo de girasoles eternos con tu propio diario especial para escribir siempre desde Brasil.
+            </p>
+
+            <div class="relative my-2 w-full max-w-md cursor-pointer group" id="openGiftBtn">
+                <div class="glass-card rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center border-2 border-purpleNight-400/60 relative overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:border-sunYellow-300 shadow-2xl animate-pulse-glow">
+                    
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-purpleNight-500/30 rounded-full blur-2xl"></div>
+                    <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-sunYellow-400/25 rounded-full blur-2xl"></div>
+
+                    <!-- RAMO BUCHÓN DE GIRASOLES CENTRADO -->
+                    <div class="relative sunflower-bouquet-wrapper mb-3 sm:mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                        <svg class="w-full h-full animate-sway-sunflower drop-shadow-[0_0_30px_rgba(250,204,21,0.7)]" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="petalGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#FFF066"/>
+                                    <stop offset="60%" stop-color="#FACC15"/>
+                                    <stop offset="100%" stop-color="#EAB308"/>
+                                </linearGradient>
+                                <linearGradient id="petalGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#FDE047"/>
+                                    <stop offset="70%" stop-color="#F59E0B"/>
+                                    <stop offset="100%" stop-color="#D97706"/>
+                                </linearGradient>
+                                <radialGradient id="centerDiscGrad" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#581C87"/>
+                                    <stop offset="50%" stop-color="#3B0764"/>
+                                    <stop offset="90%" stop-color="#1E0136"/>
+                                    <stop offset="100%" stop-color="#0F001C"/>
+                                </radialGradient>
+
+                                <!-- PATRÓN DE GIRASOL -->
+                                <g id="flowerPattern">
+                                    <g opacity="0.95">
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(0)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(30)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(60)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(90)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(120)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(150)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(180)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(210)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(240)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(270)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(300)"/>
+                                        <path d="M0 -15 C-8 -45, -12 -75, 0 -92 C12 -75, 8 -45, 0 -15 Z" fill="url(#petalGrad2)" transform="rotate(330)"/>
+                                    </g>
+                                    <g>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(15)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(45)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(75)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(105)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(135)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(165)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(195)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(225)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(255)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(285)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(315)"/>
+                                        <path d="M0 -10 C-7 -40, -10 -68, 0 -84 C10 -68, 7 -40, 0 -10 Z" fill="url(#petalGrad1)" transform="rotate(345)"/>
+                                    </g>
+                                    <circle cx="0" cy="0" r="32" fill="url(#centerDiscGrad)" stroke="#A855F7" stroke-width="2.5"/>
+                                    <circle cx="0" cy="0" r="24" stroke="#C084FC" stroke-width="1.5" stroke-dasharray="3 3" fill="none" opacity="0.6"/>
+                                    <circle cx="0" cy="0" r="16" stroke="#FDE047" stroke-width="1.5" stroke-dasharray="2 3" fill="none" opacity="0.7"/>
+                                    <circle cx="-8" cy="-8" r="5" fill="#FFF" opacity="0.25"/>
+                                </g>
+                            </defs>
+
+                            <!-- LAZO Y CINTA MORADA DE RAMO BUCHÓN -->
+                            <path d="M125 240 Q160 225 195 240 Q170 265 160 295 Q150 265 125 240Z" fill="#9333EA"/>
+                            <path d="M160 240 Q120 275 95 310 M160 240 Q200 275 225 310" stroke="#C084FC" stroke-width="6" stroke-linecap="round"/>
+
+                            <!-- TALLOS MÚLTIPLES Y HOJAS -->
+                            <path d="M160 180 Q130 240 115 310" stroke="#65A30D" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M160 180 Q160 240 160 315" stroke="#4D7C0F" stroke-width="9" stroke-linecap="round"/>
+                            <path d="M160 180 Q190 240 205 310" stroke="#65A30D" stroke-width="8" stroke-linecap="round"/>
+
+                            <path d="M120 220 Q80 200 95 180 Q115 195 120 220Z" fill="#4D7C0F" stroke="#3f6608" stroke-width="1.5"/>
+                            <path d="M200 220 Q240 200 225 180 Q205 195 200 220Z" fill="#65A30D" stroke="#2f4d05" stroke-width="1.5"/>
+
+                            <!-- GIRASOL LATERAL IZQUIERDO -->
+                            <use href="#flowerPattern" transform="translate(110, 150) scale(0.60)"/>
+
+                            <!-- GIRASOL LATERAL DERECHO -->
+                            <use href="#flowerPattern" transform="translate(210, 150) scale(0.60)"/>
+
+                            <!-- GIRASOL PRINCIPAL CENTRAL -->
+                            <use href="#flowerPattern" transform="translate(160, 110) scale(0.78)"/>
+                        </svg>
+
+                        <i class="fas fa-sparkles text-sunYellow-300 text-2xl sm:text-3xl absolute top-1 right-2 animate-bounce"></i>
+                        <i class="fas fa-star text-purpleNight-300 text-base sm:text-lg absolute bottom-2 left-2 animate-pulse"></i>
+                    </div>
+
+                    <h2 class="font-handwriting text-2xl sm:text-4xl text-sunYellow-300 font-bold mb-1">
+                        ¡Tu Ramo de Flores Amarillas! 🌻💛
+                    </h2>
+                    
+                    <p class="text-xs sm:text-sm text-purpleNight-200/90 mb-4 sm:mb-5 font-light">
+                        Toca para abrir tus tarjetas y tu espacio de escritura
+                    </p>
+
+                    <button class="w-full py-3.5 sm:py-4 px-5 sm:px-6 rounded-2xl bg-gradient-to-r from-sunYellow-300 via-purpleNight-400 to-purpleNight-600 text-cozyDark-900 font-extrabold text-sm sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 tracking-wide">
+                        <span>Ver mis Flores Amarillas 🌻✨</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <p class="text-xs text-purpleNight-200/70 mt-4 sm:mt-5 font-medium">
+                <i class="fas fa-sun text-sunYellow-400 mr-1"></i> Tu regalo de primavera y refugio digital eterno.
+            </p>
+        </section>
+
+        <!-- EXPERIENCE SECTION -->
+        <section id="experienceSection" class="hidden w-full flex-col items-center transition-all duration-700 ease-in opacity-0 scale-95">
+            
+            <div class="w-full flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 glass-card p-4 sm:p-5 rounded-3xl border border-purpleNight-400/40">
+                <div class="flex items-center gap-3 text-left w-full sm:w-auto">
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-sunYellow-300 to-purpleNight-500 flex items-center justify-center text-cozyDark-900 font-bold text-xl sm:text-2xl shadow-md shrink-0">
+                        🌻
+                    </div>
+                    <div>
+                        <h2 class="font-title text-base sm:text-xl font-bold text-sunYellow-300">
+                            Para <span class="nicknameText">Kath</span> ✨
+                        </h2>
+                        <p class="text-xs text-purpleNight-200/80">
+                            Flores amarillas de tu primo hermano 🇻🇪🇧🇷
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-purpleNight-500/20 border border-purpleNight-400/50 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-bold text-sunYellow-300 flex items-center gap-2 self-end sm:self-auto shrink-0">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="cardCounter">Tarjeta 1 de 4</span>
+                </div>
+            </div>
+
+            <!-- CAROUSEL CARDS -->
+            <div class="w-full relative min-h-[400px] sm:min-h-[440px] flex items-center justify-center">
+                
+                <!-- TARJETA 1 -->
+                <div class="card-item w-full absolute transition-all duration-500 opacity-100 scale-100 pointer-events-auto" data-index="0">
+                    <div class="glass-card-light text-cozyDark-900 rounded-3xl p-5 sm:p-8 border-2 border-sunYellow-400 shadow-2xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purpleNight-300/40 to-transparent rounded-bl-full pointer-events-none"></div>
+                        
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-2xl sm:text-4xl">🌻✨</span>
+                            <div>
+                                <span class="text-[10px] sm:text-xs font-bold tracking-widest text-purpleNight-600 uppercase">Tarjeta #1</span>
+                                <h3 class="font-title text-lg sm:text-2xl font-bold text-gray-900">
+                                    Para Quien Ilumina Todo
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="font-body text-sm sm:text-lg text-gray-800 leading-relaxed space-y-3 my-3 sm:my-4">
+                            <p>
+                                ¡Feliz 21 de septiembre, mi <strong class="nicknameText text-purpleNight-800">Kath</strong>! Hoy se regalan flores amarillas a esas personas que llenan la vida de color y buena vibra.
+                            </p>
+                            <p class="font-bold text-purpleNight-900 bg-purpleNight-100 p-3 sm:p-3.5 rounded-2xl border-l-4 border-purpleNight-600 text-xs sm:text-base">
+                                "Estas flores son eternas como tu luz. Cada vez que abras esta página desde Brasil, quiero que recuerdes lo única, bella e importante que eres para mí."
+                            </p>
+                        </div>
+
+                        <div class="pt-3 border-t border-purple-200 flex items-center justify-between text-xs sm:text-sm text-gray-600">
+                            <span class="font-handwriting text-xl sm:text-2xl text-purpleNight-700 font-bold">Un detalle de primavera 🌻</span>
+                            <span class="flex items-center gap-1 text-purpleNight-800 font-bold"><i class="fas fa-sun"></i> Siempre radiante</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TARJETA 2 -->
+                <div class="card-item w-full absolute transition-all duration-500 opacity-0 scale-90 pointer-events-none" data-index="1">
+                    <div class="glass-card-light text-cozyDark-900 rounded-3xl p-5 sm:p-8 border-2 border-purpleNight-400 shadow-2xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-sunYellow-200/60 to-transparent rounded-bl-full pointer-events-none"></div>
+
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-2xl sm:text-4xl">👩‍🦱👑</span>
+                            <div>
+                                <span class="text-[10px] sm:text-xs font-bold tracking-widest text-purpleNight-600 uppercase">Tarjeta #2</span>
+                                <h3 class="font-title text-lg sm:text-2xl font-bold text-gray-900">
+                                    Una Niña Preciosa
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="font-body text-sm sm:text-lg text-gray-800 leading-relaxed space-y-3 my-3 sm:my-4">
+                            <p>
+                                <strong class="nicknameText text-purpleNight-800">Kath</strong>, con tus 16 añitos y esos rizos hermosos que siempre te acompañan, tienes una presencia y una vibra sencillamente encantadora.
+                            </p>
+                            <p class="font-bold text-purpleNight-900 bg-sunYellow-100 p-3 sm:p-3.5 rounded-2xl border-l-4 border-sunYellow-500 text-xs sm:text-base">
+                                "Camina siempre con la cabeza en alto y orgullosa. Tienes una belleza auténtica que llama la atención y un corazón dorado que vale muchísimo."
+                            </p>
+                        </div>
+
+                        <div class="pt-3 border-t border-purple-200 flex items-center justify-between text-xs sm:text-sm text-gray-600">
+                            <span class="font-handwriting text-xl sm:text-2xl text-purpleNight-700 font-bold">¡Única & Hermosa! 🚀</span>
+                            <span class="flex items-center gap-1 text-purpleNight-800 font-bold"><i class="fas fa-sparkles"></i> 16 Añitos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TARJETA 3 -->
+                <div class="card-item w-full absolute transition-all duration-500 opacity-0 scale-90 pointer-events-none" data-index="2">
+                    <div class="glass-card-light text-cozyDark-900 rounded-3xl p-5 sm:p-8 border-2 border-sunYellow-400 shadow-2xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purpleNight-200 to-transparent rounded-bl-full pointer-events-none"></div>
+
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-2xl sm:text-4xl">💪💎</span>
+                            <div>
+                                <span class="text-[10px] sm:text-xs font-bold tracking-widest text-purpleNight-600 uppercase">Tarjeta #3</span>
+                                <h3 class="font-title text-lg sm:text-2xl font-bold text-gray-900">
+                                    Una Chica Fuerte & Capaz
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="font-body text-sm sm:text-lg text-gray-800 leading-relaxed space-y-3 my-3 sm:my-4">
+                            <p>
+                                Admiro un montón lo valiente que eres al estar allá en Brasil, echándole ganas a la vida y demostrando de qué estás hecha a tan corta edad.
+                            </p>
+                            <p class="font-bold text-purpleNight-900 bg-purpleNight-100 p-3 sm:p-3.5 rounded-2xl border-l-4 border-purpleNight-600 text-xs sm:text-base">
+                                "Nunca te dudes a ti misma. Eres inteligente, fuerte y capaz de lograr cualquier sueño que te propongas. Tu primo te celebra cada victoria."
+                            </p>
+                        </div>
+
+                        <div class="pt-3 border-t border-purple-200 flex items-center justify-between text-xs sm:text-sm text-gray-600">
+                            <span class="font-handwriting text-xl sm:text-2xl text-purpleNight-700 font-bold">¡Orgullo de primo! 😄</span>
+                            <span class="flex items-center gap-1 text-purpleNight-800 font-bold"><i class="fas fa-bolt"></i> Fuerza & Valentía</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TARJETA 4 -->
+                <div class="card-item w-full absolute transition-all duration-500 opacity-0 scale-90 pointer-events-none" data-index="3">
+                    <div class="glass-card-light text-cozyDark-900 rounded-3xl p-5 sm:p-8 border-2 border-purpleNight-400 shadow-2xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-sunYellow-200 to-transparent rounded-bl-full pointer-events-none"></div>
+
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-2xl sm:text-4xl">🫂🤝</span>
+                            <div>
+                                <span class="text-[10px] sm:text-xs font-bold tracking-widest text-purpleNight-600 uppercase">Tarjeta #4</span>
+                                <h3 class="font-title text-lg sm:text-2xl font-bold text-gray-900">
+                                    Cerca a un Mensaje
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="font-body text-sm sm:text-lg text-gray-800 leading-relaxed space-y-3 my-3 sm:my-4">
+                            <p>
+                                Entre los primos hermanos la distancia entre Venezuela y Brasil es solo un número. La complicidad, el cariño y las risas de siempre siguen intactas.
+                            </p>
+                            <p class="font-bold text-purpleNight-900 bg-sunYellow-100 p-3 sm:p-3.5 rounded-2xl border-l-4 border-sunYellow-500 text-xs sm:text-base">
+                                "Aquí tienes a tu primo incondicional para lo que necesites, desahogarte, echar broma o escucharte. Te quiero un mundo, prima mía."
+                            </p>
+                        </div>
+
+                        <div class="pt-3 border-t border-purple-200 flex items-center justify-between text-xs sm:text-sm text-gray-600">
+                            <span class="font-handwriting text-xl sm:text-2xl text-purpleNight-700 font-bold">Unidos siempre 💛</span>
+                            <span class="flex items-center gap-1 text-purpleNight-800 font-bold"><i class="fas fa-heart"></i> Primo & Prima</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CAROUSEL CONTROLS -->
+            <div class="w-full flex items-center justify-between gap-3 mt-5 sm:mt-6">
+                <button id="prevBtn" class="px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl glass-card text-purpleNight-200 hover:bg-white/10 transition-all font-bold flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed text-xs sm:text-sm border border-purpleNight-400/30">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Anterior</span>
+                </button>
+
+                <div class="flex items-center gap-1.5 sm:gap-2" id="dotsContainer">
+                    <div class="w-3.5 h-2.5 sm:w-4 sm:h-3 rounded-full bg-sunYellow-400 transition-all"></div>
+                    <div class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/30 transition-all"></div>
+                    <div class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/30 transition-all"></div>
+                    <div class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/30 transition-all"></div>
+                </div>
+
+                <button id="nextBtn" class="px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl bg-gradient-to-r from-sunYellow-300 via-purpleNight-400 to-purpleNight-600 text-cozyDark-900 font-extrabold hover:shadow-lg transition-all flex items-center gap-2 text-xs sm:text-sm">
+                    <span>Siguiente</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- SECCIÓN: EL DIARIO PRIVADO DE KATH 📖🌻 -->
+            <div class="w-full mt-8 sm:mt-10 glass-card p-4 sm:p-7 rounded-3xl border border-purpleNight-400/40">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-2xl sm:text-3xl">📖✍️</span>
+                    <div>
+                        <h3 class="font-title text-lg sm:text-2xl font-bold text-sunYellow-300">
+                            El Diario Secreto de <span class="nicknameText">Kath</span>
+                        </h3>
+                        <p class="text-xs text-purpleNight-200/80">
+                            Un espacio 100% privado solo para ti. Escribe lo que piensas, tus sueños o desahógate.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 my-4">
+                    <textarea id="diaryInput" rows="4" placeholder="Escribe aquí lo que sientes hoy... (Solo tú podrás leerlo en tu teléfono)" class="w-full p-3.5 sm:p-4 rounded-2xl bg-black/40 text-white placeholder-purpleNight-300/50 border border-purpleNight-400/30 focus:border-sunYellow-400 focus:outline-none text-xs sm:text-sm transition-all resize-none"></textarea>
+                    
+                    <button id="saveNoteBtn" class="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-purpleNight-500 to-purpleNight-700 hover:from-purpleNight-600 hover:to-purpleNight-800 text-white font-extrabold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
+                        <i class="fas fa-bookmark text-sunYellow-300"></i>
+                        <span>Guardar en mi diario secreto</span>
+                    </button>
+                </div>
+
+                <!-- Lista de Notas Guardadas -->
+                <div class="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-purpleNight-400/30">
+                    <h4 class="text-xs font-bold text-sunYellow-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fas fa-book-open"></i> Mis Notas Guardadas:
+                    </h4>
+                    <div id="notesContainer" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                        <!-- Carga dinámica -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full mt-6 sm:mt-8 text-center">
+                <button id="hugBtn" class="w-full px-5 py-3.5 sm:px-6 sm:py-5 rounded-3xl bg-gradient-to-r from-sunYellow-300 via-purpleNight-400 to-purpleNight-600 text-cozyDark-900 font-extrabold text-base sm:text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border-2 border-sunYellow-200 flex items-center justify-center gap-3 mx-auto">
+                    <i class="fas fa-sun text-purpleNight-900 text-xl sm:text-2xl animate-spin"></i>
+                    <span>¡Recibir Abrazo Virtual Infinito! 🫂✨</span>
+                </button>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- HUG MODAL -->
+    <div id="hugModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-500">
+        <div class="glass-card-light text-cozyDark-900 rounded-3xl max-w-lg w-full p-5 sm:p-8 text-center relative shadow-2xl border-4 border-purpleNight-400 scale-90 transition-transform duration-500" id="hugModalContent">
+            
+            <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full bg-purpleNight-100 border border-purpleNight-300 flex items-center justify-center mb-3 text-3xl sm:text-4xl shadow-inner">
+                🌻🫂
+            </div>
+
+            <h3 class="font-title text-xl sm:text-3xl font-bold text-purpleNight-900 mb-2">
+                ¡Abrazo Infinito para <span class="nicknameText">Kath</span>!
+            </h3>
+
+            <p class="font-body text-xs sm:text-base text-gray-800 leading-relaxed mb-4 sm:mb-5">
+                ¡Que estas flores amarillas te llenen el corazón de alegría, fuerza y sonrisas el 21 de septiembre y siempre!
+            </p>
+
+            <div class="bg-gradient-to-r from-purpleNight-100 via-sunYellow-100 to-purpleNight-200 p-3.5 sm:p-4 rounded-2xl mb-4 sm:mb-5 border border-purpleNight-300">
+                <p class="font-handwriting text-xl sm:text-3xl font-bold text-cozyDark-900">
+                    "¡Feliz Día de las Flores Amarillas para la prima más linda!"
+                </p>
+            </div>
+
+            <button id="closeHugModal" class="w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-sunYellow-400 to-purpleNight-500 text-cozyDark-900 font-extrabold text-sm sm:text-base hover:shadow-lg transition-all active:scale-95">
+                ¡Gracias primo! 🌻✨
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // -------------------------------------------------------------
+        // Floating Sunflower & Purple Petals Canvas Animation
+        // -------------------------------------------------------------
+        const canvas = document.getElementById('petalsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const petals = [];
+        const petalCount = 40;
+
+        class DaisyPetal {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height + height;
+                this.rx = Math.random() * 5 + 3;
+                this.ry = this.rx * 2.2;
+                this.speedY = Math.random() * 0.9 + 0.4;
+                this.speedX = Math.sin(Math.random() * Math.PI) * 0.5;
+                this.rotation = Math.random() * 360;
+                this.rotSpeed = (Math.random() - 0.5) * 1.5;
+                this.opacity = Math.random() * 0.75 + 0.25;
+                this.color = ['#FACC15', '#FDE047', '#C084FC', '#A855F7', '#D8B4FE'][Math.floor(Math.random() * 5)];
+            }
+            update() {
+                this.y -= this.speedY;
+                this.x += Math.sin(this.y * 0.01) * 0.6;
+                this.rotation += this.rotSpeed;
+                if (this.y < -20) { this.reset(); this.y = height + 20; }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.rotation * Math.PI) / 180);
+                ctx.globalAlpha = this.opacity;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.rx, this.ry, 0, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < petalCount; i++) petals.push(new DaisyPetal());
+
+        function renderCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            petals.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(renderCanvas);
+        }
+        renderCanvas();
+
+        // -------------------------------------------------------------
+        // Nickname Switcher Logic (Kath <-> Mi Negrita)
+        // -------------------------------------------------------------
+        let currentNickname = "Kath";
+        const nicknameToggle = document.getElementById('nicknameToggle');
+        const currentNicknameBadge = document.getElementById('currentNicknameBadge');
+
+        nicknameToggle.addEventListener('click', () => {
+            currentNickname = (currentNickname === "Kath") ? "Mi Negrita" : "Kath";
+            currentNicknameBadge.textContent = currentNickname;
+            document.querySelectorAll('.nicknameText').forEach(el => { el.textContent = currentNickname; });
+        });
+
+        // -------------------------------------------------------------
+        // MÚSICA AMBIENTAL EXCLUSIVA DE KATH (Tone.js) 🎵💜
+        // -------------------------------------------------------------
+        let synth = null;
+        let isMusicPlaying = false;
+
+        function initMusic() {
+            if (synth) return;
+
+            const reverb = new Tone.Reverb({ decay: 4.5, wet: 0.4 }).toDestination();
+            
+            synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'sine' },
+                envelope: {
+                    attack: 0.4,
+                    decay: 1.5,
+                    sustain: 0.6,
+                    release: 2.5
+                }
+            }).connect(reverb);
+
+            synth.volume.value = -10;
+
+            const melodyNotes = [
+                'G4', 'B4', 'D5', 'E5',
+                'D5', 'B4', 'G4', 'E4',
+                'A4', 'C5', 'E5', 'G5',
+                'E5', 'C5', 'A4', 'F#4'
+            ];
+
+            let noteIndex = 0;
+            Tone.Transport.scheduleRepeat((time) => {
+                synth.triggerAttackRelease(melodyNotes[noteIndex], '8n', time);
+                noteIndex = (noteIndex + 1) % melodyNotes.length;
+            }, '4n');
+        }
+
+        const musicToggle = document.getElementById('musicToggle');
+        const musicIcon = document.getElementById('musicIcon');
+        const musicStatusText = document.getElementById('musicStatusText');
+
+        async function toggleMusic() {
+            await Tone.start();
+            initMusic();
+
+            if (!isMusicPlaying) {
+                Tone.Transport.start();
+                isMusicPlaying = true;
+                musicIcon.className = "fas fa-volume-high text-sunYellow-300 animate-pulse";
+                if (musicStatusText) musicStatusText.textContent = "Caja de Música 💜";
+            } else {
+                Tone.Transport.stop();
+                isMusicPlaying = false;
+                musicIcon.className = "fas fa-volume-xmark text-white/50";
+                if (musicStatusText) musicStatusText.textContent = "Música Pausada";
+            }
+        }
+
+        musicToggle.addEventListener('click', toggleMusic);
+
+        // -------------------------------------------------------------
+        // Carousel Cards Navigation Logic
+        // -------------------------------------------------------------
+        let currentCardIndex = 0;
+        const totalCards = 4;
+        const cardItems = document.querySelectorAll('.card-item');
+        const cardCounter = document.getElementById('cardCounter');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const dotsContainer = document.getElementById('dotsContainer');
+
+        function updateCarousel() {
+            cardItems.forEach((card, idx) => {
+                if (idx === currentCardIndex) {
+                    card.classList.remove('opacity-0', 'scale-90', 'pointer-events-none');
+                    card.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+                } else {
+                    card.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+                    card.classList.add('opacity-0', 'scale-90', 'pointer-events-none');
+                }
+            });
+
+            cardCounter.textContent = `Tarjeta ${currentCardIndex + 1} de ${totalCards}`;
+            prevBtn.disabled = currentCardIndex === 0;
+
+            if (currentCardIndex === totalCards - 1) {
+                nextBtn.innerHTML = `<span>Volver a empezar</span> <i class="fas fa-rotate-right"></i>`;
+            } else {
+                nextBtn.innerHTML = `<span>Siguiente</span> <i class="fas fa-arrow-right"></i>`;
+            }
+
+            const dots = dotsContainer.children;
+            for (let i = 0; i < dots.length; i++) {
+                if (i === currentCardIndex) {
+                    dots[i].className = "w-3.5 h-2.5 sm:w-4 sm:h-3 rounded-full bg-sunYellow-400 transition-all shadow-md";
+                } else {
+                    dots[i].className = "w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white/30 transition-all";
+                }
+            }
+        }
+
+        prevBtn.addEventListener('click', () => { if (currentCardIndex > 0) { currentCardIndex--; updateCarousel(); } });
+        nextBtn.addEventListener('click', () => {
+            if (currentCardIndex < totalCards - 1) { currentCardIndex++; } else { currentCardIndex = 0; }
+            updateCarousel();
+        });
+
+        // -------------------------------------------------------------
+        // DIARIO PRIVADO (LocalStorage) 📖✍️
+        // -------------------------------------------------------------
+        const diaryInput = document.getElementById('diaryInput');
+        const saveNoteBtn = document.getElementById('saveNoteBtn');
+        const notesContainer = document.getElementById('notesContainer');
+
+        function loadNotes() {
+            const savedNotes = JSON.parse(localStorage.getItem('kath_diary_notes') || '[]');
+            notesContainer.innerHTML = '';
+
+            if (savedNotes.length === 0) {
+                notesContainer.innerHTML = `<p class="text-xs text-purpleNight-200/50 italic text-center py-2">Aún no has guardado ninguna nota. ¡Escribe la primera arriba! 🌻</p>`;
+                return;
+            }
+
+            savedNotes.forEach((note, index) => {
+                const noteEl = document.createElement('div');
+                noteEl.className = 'bg-black/30 p-3.5 rounded-2xl border border-purpleNight-400/20 text-xs sm:text-sm text-purpleNight-100 flex flex-col justify-between gap-2';
+                noteEl.innerHTML = `
+                    <p class="leading-relaxed whitespace-pre-wrap">${escapeHTML(note.text)}</p>
+                    <div class="flex items-center justify-between text-[10px] text-purpleNight-300/60 pt-1 border-t border-purpleNight-400/10">
+                        <span>📅 ${note.date}</span>
+                        <button onclick="deleteNote(${index})" class="text-red-400/80 hover:text-red-300 font-bold flex items-center gap-1">
+                            <i class="fas fa-trash-can"></i> Borrar
+                        </button>
+                    </div>
+                `;
+                notesContainer.appendChild(noteEl);
+            });
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        saveNoteBtn.addEventListener('click', () => {
+            const text = diaryInput.value.trim();
+            if (!text) return;
+
+            const savedNotes = JSON.parse(localStorage.getItem('kath_diary_notes') || '[]');
+            const newNote = {
+                text: text,
+                date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+            };
+
+            savedNotes.unshift(newNote);
+            localStorage.setItem('kath_diary_notes', JSON.stringify(savedNotes));
+            diaryInput.value = '';
+            loadNotes();
+
+            confetti({ particleCount: 25, spread: 50, origin: { y: 0.8 }, colors: ['#FACC15', '#C084FC'] });
+        });
+
+        window.deleteNote = function(index) {
+            const savedNotes = JSON.parse(localStorage.getItem('kath_diary_notes') || '[]');
+            savedNotes.splice(index, 1);
+            localStorage.setItem('kath_diary_notes', JSON.stringify(savedNotes));
+            loadNotes();
+        };
+
+        loadNotes();
+
+        // -------------------------------------------------------------
+        // Navigation (Welcome -> Experience)
+        // -------------------------------------------------------------
+        const openGiftBtn = document.getElementById('openGiftBtn');
+        const welcomeSection = document.getElementById('welcomeSection');
+        const experienceSection = document.getElementById('experienceSection');
+
+        openGiftBtn.addEventListener('click', async () => {
+            confetti({
+                particleCount: 90,
+                spread: 100,
+                origin: { y: 0.6 },
+                colors: ['#FACC15', '#C084FC', '#A855F7', '#FFFFFF']
+            });
+
+            try { if (!isMusicPlaying) await toggleMusic(); } catch (e) {}
+
+            welcomeSection.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                welcomeSection.classList.add('hidden');
+                experienceSection.classList.remove('hidden');
+                setTimeout(() => {
+                    experienceSection.classList.remove('opacity-0', 'scale-95');
+                    experienceSection.classList.add('opacity-100', 'scale-100');
+                }, 50);
+            }, 600);
+        });
+
+        // -------------------------------------------------------------
+        // Hug Modal Logic & Confetti
+        // -------------------------------------------------------------
+        const hugBtn = document.getElementById('hugBtn');
+        const hugModal = document.getElementById('hugModal');
+        const hugModalContent = document.getElementById('hugModalContent');
+        const closeHugModal = document.getElementById('closeHugModal');
+
+        hugBtn.addEventListener('click', () => {
+            const end = Date.now() + (2.5 * 1000);
+            const interval = setInterval(function() {
+                if (Date.now() > end) return clearInterval(interval);
+                confetti({
+                    startVelocity: 35,
+                    spread: 360,
+                    ticks: 70,
+                    origin: { x: Math.random(), y: Math.random() - 0.2 },
+                    colors: ['#FACC15', '#C084FC', '#A855F7', '#FFFFFF']
+                });
+            }, 180);
+
+            hugModal.classList.remove('opacity-0', 'pointer-events-none');
+            hugModalContent.classList.remove('scale-90');
+            hugModalContent.classList.add('scale-100');
+        });
+
+        closeHugModal.addEventListener('click', () => {
+            hugModal.classList.add('opacity-0', 'pointer-events-none');
+            hugModalContent.classList.remove('scale-100');
+            hugModalContent.classList.add('scale-90');
+        });
+
+        hugModal.addEventListener('click', (e) => { if (e.target === hugModal) closeHugModal.click(); });
+    </script>
+</body>
+</html>
